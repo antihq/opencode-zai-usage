@@ -64,6 +64,20 @@ function parseLimit(raw: QuotaLimit): ParsedLimit | null {
   }
 }
 
+/** Peak is Mon–Fri 14:00–18:00 UTC+8 (06:00–10:00 UTC); weekends are off-peak. */
+function rateAt(now: number): { rate: "peak" | "offpeak"; switchAt: number } {
+  const date = new Date(now)
+  const day = date.getUTCDay()
+  const hour = date.getUTCHours()
+  const isPeak = day >= 1 && day <= 5 && hour >= 6 && hour < 10
+  const boundary = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), isPeak ? 10 : 6))
+  if (!isPeak) {
+    if (hour >= 6) boundary.setUTCDate(boundary.getUTCDate() + 1)
+    while (boundary.getUTCDay() === 0 || boundary.getUTCDay() === 6) boundary.setUTCDate(boundary.getUTCDate() + 1)
+  }
+  return { rate: isPeak ? "peak" : "offpeak", switchAt: boundary.getTime() }
+}
+
 export const main: Plugin.MainSetup = (ctx) => {
   let settings: Settings = DEFAULT_SETTINGS
   let timer: ReturnType<typeof setInterval> | undefined
@@ -75,6 +89,8 @@ export const main: Plugin.MainSetup = (ctx) => {
     error: "",
     updatedAt: 0,
     plan: "",
+    rate: "offpeak",
+    rateSwitchAt: 0,
     win5: { pctUsed: 0, resetAt: 0 },
     week: { pctUsed: 0, resetAt: 0, available: false },
     mcp: { pctUsed: 0, used: 0, limit: 0, resetAt: 0, tools: [] },
@@ -166,12 +182,15 @@ export const main: Plugin.MainSetup = (ctx) => {
 
       // A five-hour reset cannot be more than ~6h away; ignore impossible values.
       const plausible = five.windowMinutes !== 300 || !five.resetAt || five.resetAt <= now + (5 * 3600 + 60) * 1000
+      const rate = rateAt(now)
 
       snapshot = {
         status: "ok",
         error: "",
         updatedAt: now,
         plan: String(quota.level ?? quota.planName ?? ""),
+        rate: rate.rate,
+        rateSwitchAt: rate.switchAt,
         win5: { pctUsed: five.pctUsed, resetAt: plausible ? five.resetAt : 0 },
         week:
           weekly && weekly !== five

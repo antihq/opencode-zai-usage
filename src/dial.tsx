@@ -18,6 +18,10 @@ function remaining(pctUsed: number): number {
   return Math.max(0, Math.round(100 - pctUsed))
 }
 
+function planLabel(plan: string): string {
+  return plan ? `${plan.charAt(0).toUpperCase()}${plan.slice(1)}` : ""
+}
+
 function resetText(resetAt: number): string {
   if (!resetAt) return ""
   return resetAt > Date.now() + DAY ? shortDate(resetAt) : timeOfDay(resetAt)
@@ -69,7 +73,13 @@ export function UsageInfoBox(props: { close: () => void }) {
       title={ctx.t("title")}
       description={
         state()
-          ? `${state()!.plan ? `${state()!.plan} · ` : ""}${ctx.t("panel.live")} · ${ctx.t("panel.updated", { time: timeOfDay(state()!.updatedAt) })}`
+          ? [
+              state()!.plan ? ctx.t("box.plan", { plan: planLabel(state()!.plan) }) : "",
+              state()!.rate === "peak" ? ctx.t("rate.peak") : ctx.t("rate.offpeak"),
+              ctx.t("panel.updated", { time: timeOfDay(state()!.updatedAt) }),
+            ]
+              .filter(Boolean)
+              .join(", ")
           : ctx.t("panel.error")
       }
       closable={false}
@@ -78,7 +88,7 @@ export function UsageInfoBox(props: { close: () => void }) {
         <div class="opu-box-head">
           <span class="opu-box-head-label">{ctx.t("box.section")}</span>
           <Show when={state()?.plan}>
-            <span class="opu-box-badge">{state()!.plan}</span>
+            <span class="opu-box-badge">{planLabel(state()!.plan)}</span>
           </Show>
         </div>
         <div class="opu-box-panel">
@@ -96,10 +106,7 @@ export function UsageInfoBox(props: { close: () => void }) {
                         {ctx.t("box.remaining", { pct: remaining(row.pctUsed) })}
                       </span>
                       <Show when={row.sub}>
-                        <>
-                          <span class="opu-box-dot">·</span>
-                          <span class="opu-box-sub">{row.sub}</span>
-                        </>
+                        <span class="opu-box-sub">{row.sub}</span>
                       </Show>
                     </span>
                   </div>

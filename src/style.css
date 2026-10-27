@@ -166,11 +166,7 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 6px;
-}
-
-.opu-box-dot {
-  color: var(--v2-icon-icon-muted, var(--opu-muted));
+  gap: 10px;
 }
 
 .opu-box-sub {

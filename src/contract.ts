@@ -41,6 +41,10 @@ export const UsageState = Schema.Struct({
   updatedAt: Schema.Number,
   /** Plan level from the API ("pro"), or "" when unknown. */
   plan: Schema.String,
+  /** "peak" while Mon–Fri 14:00–18:00 UTC+8, else "offpeak". */
+  rate: Schema.String,
+  /** ms epoch when the rate flips. */
+  rateSwitchAt: Schema.Number,
   win5: Window,
   /** The weekly window, when the plan exposes one. */
   week: Schema.Struct({ ...Window.fields, available: Schema.Boolean }),
