@@ -60,7 +60,7 @@ export const UsageState = Schema.Struct({
 export type UsageState = Schema.Schema.Type<typeof UsageState>
 
 export const UsageBridge = Ipc.define({
-  id: "plan-usage.bridge",
+  id: "opencode-zai-usage.bridge",
   state: UsageState,
   methods: {
     refresh: {},

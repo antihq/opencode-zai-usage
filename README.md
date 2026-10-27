@@ -1,4 +1,4 @@
-# plan-usage
+# opencode-zai-usage
 
 A coding-plan usage dial for [OpenCode Desktop](https://opencode.ai/v2/docs/build/plugins/gui). One ring in the session header; hover for a summary, click for the quota card. Live values from the z.ai plan API — no estimates.
 
@@ -24,7 +24,7 @@ npm install && npm run build
 Add to `~/.config/opencode/opencode.json`:
 
 ```jsonc
-{ "plugins": ["/absolute/path/to/antihq-plan-usage"] }
+{ "plugins": ["/absolute/path/to/antihq-opencode-zai-usage"] }
 ```
 
 ## Develop
