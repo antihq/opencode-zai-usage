@@ -117,34 +117,44 @@ function UsageInfoBox(props: { close: () => void; session: MountedSession }) {
         </>
       }
     >
-      <For each={rows()}>
-        {(row, index) => (
-          <>
-            <Show when={index() > 0}>
-              <div class="opu-box-divider" />
-            </Show>
-            <div class="opu-box-item">
-              <div class="opu-box-row">
-                <span class="opu-box-label">{row.label}</span>
-                <span class="opu-box-spend">
-                  <span class={`opu-box-value ${danger(row.pctUsed) ? "opu-box-danger" : ""}`}>
-                    {ctx.t("box.remaining", { pct: remaining(row.pctUsed) })}
-                  </span>
-                  <Show when={row.sub}>
-                    <>
-                      <span class="opu-box-dot">·</span>
-                      <span class="opu-box-sub">{row.sub}</span>
-                    </>
-                  </Show>
-                </span>
-              </div>
-              <div class="opu-box-track">
-                <div class={`opu-box-fill ${danger(row.pctUsed) ? "opu-box-danger" : ""}`} style={{ width: `${row.pctUsed}%` }} />
-              </div>
-            </div>
-          </>
-        )}
-      </For>
+      <div class="opu-box">
+        <div class="opu-box-head">
+          <span class="opu-box-head-label">{ctx.t("box.section")}</span>
+          <Show when={state()?.plan}>
+            <span class="opu-box-badge">{state()!.plan}</span>
+          </Show>
+        </div>
+        <div class="opu-box-panel">
+          <For each={rows()}>
+            {(row, index) => (
+              <>
+                <Show when={index() > 0}>
+                  <div class="opu-box-divider" />
+                </Show>
+                <div class="opu-box-item">
+                  <div class="opu-box-row">
+                    <span class="opu-box-label">{row.label}</span>
+                    <span class="opu-box-spend">
+                      <span class={`opu-box-value ${danger(row.pctUsed) ? "opu-box-danger" : ""}`}>
+                        {ctx.t("box.remaining", { pct: remaining(row.pctUsed) })}
+                      </span>
+                      <Show when={row.sub}>
+                        <>
+                          <span class="opu-box-dot">·</span>
+                          <span class="opu-box-sub">{row.sub}</span>
+                        </>
+                      </Show>
+                    </span>
+                  </div>
+                  <div class="opu-box-track">
+                    <div class={`opu-box-fill ${danger(row.pctUsed) ? "opu-box-danger" : ""}`} style={{ width: `${row.pctUsed}%` }} />
+                  </div>
+                </div>
+              </>
+            )}
+          </For>
+        </div>
+      </div>
     </ctx.ui.Dialog>
   )
 }

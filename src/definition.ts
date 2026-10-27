@@ -44,6 +44,7 @@ export const definition = Plugin.define({
       "box.resets": "resets {{time}}",
       "box.calls": "{{used}} / {{limit}} calls",
       "box.more": "More ›",
+      "box.section": "GLM Coding Plan",
       "popover.more": "More ›",
       "command.open": "Open coding plan usage",
       "menu.open": "Coding plan usage",
