@@ -1,20 +1,9 @@
 import { createEffect } from "solid-js"
-import {
-  Command,
-  MenuItem,
-  Panel,
-  SettingsPage,
-  Slot,
-  Style,
-  type Command as CommandType,
-  type MenuItem as MenuItemType,
-  type PanelTab,
-} from "@opencode/plugin/gui"
+import { Command, SettingsPage, Slot, Style, type Command as CommandType } from "@opencode/plugin/gui"
 import type { Plugin } from "@opencode/plugin/gui"
 import type { definition } from "./definition"
 import { UsageBridge } from "./contract"
-import { UsageDial } from "./dial"
-import { UsagePanel } from "./panel"
+import { UsageDial, UsageInfoBox } from "./dial"
 import { UsageSettings } from "./settings"
 import css from "./style.css?inline"
 
@@ -29,67 +18,26 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
   })
 
   const openUsage = () => {
-    const session = ctx.sessions.current()
-    if (session) ctx.layout.open(`${ctx.id}:usage`, session)
-    else ctx.layout.settings("usage")
+    ctx.dialogs.open((dialog) => <UsageInfoBox close={dialog.close} />, { replace: true })
   }
 
-  /* ---------- styles ---------- */
   ctx.add(Style, css)
 
-  /* ---------- header dial ---------- */
   ctx.add(Slot, {
     at: "session.header",
     order: 10,
-    render: (input) => <UsageDial session={input.session} />,
+    render: () => <UsageDial />,
   })
 
-  /* ---------- side panel (full data) ---------- */
-  const usageTab: PanelTab = {
-    id: "usage",
-    get title() {
-      return ctx.t("panel.title")
-    },
-    closable: "compact",
-    fallback: true,
-  }
-
-  ctx.add(Panel, {
-    id: "usage",
-    region: "side",
-    mobile: {
-      get title() {
-        return ctx.t("panel.title")
-      },
-      order: 45,
-      kind: "menu",
-      icon: "window-analytics",
-    },
-    list: (input) => (input.open.includes("usage") ? [usageTab] : []),
-    render: () => <UsagePanel />,
-  })
-
-  /* ---------- + menu launcher ---------- */
-  ctx.add(MenuItem, (): MenuItemType => ({
-    menu: "session.panel",
-    id: "usage",
-    title: ctx.t("menu.open"),
-    icon: "window-analytics",
-    description: ctx.t("panel.sub"),
-    run: openUsage,
-  }))
-
-  /* ---------- command ---------- */
   ctx.add(Command, (): CommandType => ({
     id: "open",
     title: ctx.t("command.open"),
-    keywords: "usage plan quota credits glm zai",
+    keywords: "usage plan quota glm zai",
     section: "navigation",
     bind: "mod+shift+u",
     run: openUsage,
   }))
 
-  /* ---------- settings page ---------- */
   ctx.add(SettingsPage, {
     id: "usage",
     icon: "window-analytics",

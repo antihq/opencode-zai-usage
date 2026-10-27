@@ -1,6 +1,5 @@
 import type { Plugin } from "@opencode/plugin/gui"
 import { DEFAULT_SETTINGS, UsageBridge, type Settings, type UsageState } from "./contract"
-import { DAY, EMPTY_TOKENS, addTokens, type Tokens } from "./credits"
 
 /* ------------------------------------------------------------------ */
 /* z.ai quota API — endpoint + parsing follow CodexBar's zai plugin    */
@@ -54,7 +53,6 @@ function parseLimit(raw: QuotaLimit): ParsedLimit | null {
   }
   let windowMinutes = raw.number > 0 && UNIT_MINUTES[raw.unit] ? raw.number * UNIT_MINUTES[raw.unit] : null
   if (raw.type === "TIME_LIMIT" && raw.unit === 5 && raw.number === 1) windowMinutes = MONTHLY_MCP_MINUTES
-  const tools = (raw.usageDetails ?? []).map((detail) => ({ name: detail.modelCode, used: detail.usage }))
   return {
     type: raw.type,
     pctUsed: Math.max(0, Math.min(100, percent)),
@@ -62,49 +60,9 @@ function parseLimit(raw: QuotaLimit): ParsedLimit | null {
     windowMinutes,
     used: current,
     limit: usage,
-    tools,
+    tools: (raw.usageDetails ?? []).map((detail) => ({ name: detail.modelCode, used: detail.usage })),
   }
 }
-
-/** Peak is Mon–Fri 14:00–18:00 UTC+8 (06:00–10:00 UTC); weekends are off-peak. */
-function rateAt(now: number): { rate: "peak" | "offpeak"; switchAt: number } {
-  const date = new Date(now)
-  const day = date.getUTCDay()
-  const hour = date.getUTCHours()
-  const isPeak = day >= 1 && day <= 5 && hour >= 6 && hour < 10
-  const boundary = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), isPeak ? 10 : 6))
-  if (!isPeak) {
-    if (hour >= 6) boundary.setUTCDate(boundary.getUTCDate() + 1)
-    while (boundary.getUTCDay() === 0 || boundary.getUTCDay() === 6) boundary.setUTCDate(boundary.getUTCDate() + 1)
-  }
-  return { rate: isPeak ? "peak" : "offpeak", switchAt: boundary.getTime() }
-}
-
-/* ------------------------------------------------------------------ */
-/* OpenCode local history (per-model tokens, activity)                 */
-/* ------------------------------------------------------------------ */
-
-interface StatsModel {
-  model: { id: string; providerID: string }
-  steps: number
-  tokens: { input: number; output: number; reasoning: number; cache: { read: number; write: number } }
-}
-
-interface StatsData {
-  sessions: number
-  prompts: number
-  steps: number
-  tokens: { input: number; output: number; reasoning: number; cache: { read: number; write: number } }
-  tools: { totals: { calls: number }; usage?: Array<{ name: string; calls: number }> }
-  models: StatsModel[]
-  activity: Array<{ date: string; steps: number }>
-}
-
-function tokensOf(t: { input: number; output: number; reasoning: number; cache: { read: number; write: number } }): Tokens {
-  return { input: t.input, output: t.output, reasoning: t.reasoning, cacheRead: t.cache.read, cacheWrite: t.cache.write }
-}
-
-/* ------------------------------------------------------------------ */
 
 export const main: Plugin.MainSetup = (ctx) => {
   let settings: Settings = DEFAULT_SETTINGS
@@ -117,14 +75,9 @@ export const main: Plugin.MainSetup = (ctx) => {
     error: "",
     updatedAt: 0,
     plan: "",
-    rate: "offpeak",
-    rateSwitchAt: 0,
     win5: { pctUsed: 0, resetAt: 0 },
     week: { pctUsed: 0, resetAt: 0, available: false },
     mcp: { pctUsed: 0, used: 0, limit: 0, resetAt: 0, tools: [] },
-    totals: { prompts: 0, steps: 0, sessions: 0, toolCalls: 0, tokens: EMPTY_TOKENS },
-    models: [],
-    activity: [],
   }
 
   const provider = ctx.provide(UsageBridge, {
@@ -135,27 +88,11 @@ export const main: Plugin.MainSetup = (ctx) => {
     applySettings: (next) => {
       settings = { ...DEFAULT_SETTINGS, ...next }
       cachedKey = settings.apiKey || undefined
-      schedule()
+      if (timer) clearInterval(timer)
+      timer = setInterval(() => void poll(), Math.max(30, Math.round(settings.refreshSeconds)) * 1000)
       void poll()
     },
   })
-
-  function schedule() {
-    if (timer) clearInterval(timer)
-    const seconds = Math.max(30, Math.round(settings.refreshSeconds))
-    timer = setInterval(() => void poll(), seconds * 1000)
-  }
-
-  async function sidecarGet(path: string): Promise<unknown> {
-    const endpoint = ctx.serverEndpoints.get("sidecar")
-    if (!endpoint) throw new Error("desktop server unavailable")
-    const response = await fetch(`${endpoint.url.replace(/\/+$/, "")}${path}`, {
-      headers: endpoint.headers,
-      signal: AbortSignal.timeout(20_000),
-    })
-    if (!response.ok) throw new Error(`${path} ${response.status}`)
-    return response.json()
-  }
 
   /** The z.ai plan key: the override from settings, else OpenCode's stored credential. */
   async function apiKey(): Promise<string | undefined> {
@@ -165,7 +102,14 @@ export const main: Plugin.MainSetup = (ctx) => {
       return cachedKey
     }
     try {
-      const body = (await sidecarGet("/api/credential")) as { data?: Array<{ integrationID: string; value?: { key?: string } }> }
+      const endpoint = ctx.serverEndpoints.get("sidecar")
+      if (!endpoint) throw new Error("desktop server unavailable")
+      const response = await fetch(`${endpoint.url.replace(/\/+$/, "")}/api/credential`, {
+        headers: endpoint.headers,
+        signal: AbortSignal.timeout(20_000),
+      })
+      if (!response.ok) throw new Error(`credential ${response.status}`)
+      const body = (await response.json()) as { data?: Array<{ integrationID: string; value?: { key?: string } }> }
       const credential =
         body.data?.find((item) => item.integrationID === "zai-coding-plan") ??
         body.data?.find((item) => /zai/i.test(item.integrationID))
@@ -201,28 +145,16 @@ export const main: Plugin.MainSetup = (ctx) => {
     return body.data
   }
 
-  async function fetchStats(from: number, to: number): Promise<StatsData> {
-    const body = (await sidecarGet(
-      `/api/experimental/session/stats?from=${Math.round(from)}&to=${Math.round(to)}&tools=summary`,
-    )) as { data: StatsData | null }
-    if (!body.data) throw new Error("no stats data")
-    return body.data
-  }
-
   async function poll() {
     const run = ++generation
     try {
       const now = Date.now()
-      const [quota, stats7d, stats14d] = await Promise.all([
-        fetchQuota(),
-        fetchStats(now - 7 * DAY, now).catch(() => undefined),
-        fetchStats(now - 14 * DAY, now).catch(() => undefined),
-      ])
+      const quota = await fetchQuota()
       if (run !== generation || ctx.signal.aborted) return
 
       const parsed = quota.limits.map(parseLimit).filter((item): item is ParsedLimit => item !== null)
 
-      // Token/credit windows, shortest first: [0] is the 5-hour window, the last is weekly when present.
+      // Token/credit windows, shortest first: the 5-hour window, and weekly when present.
       const tokenLimits = parsed
         .filter((item) => item.type !== "TIME_LIMIT" && item.windowMinutes !== null)
         .sort((a, b) => (a.windowMinutes ?? 0) - (b.windowMinutes ?? 0))
@@ -234,60 +166,26 @@ export const main: Plugin.MainSetup = (ctx) => {
 
       // A five-hour reset cannot be more than ~6h away; ignore impossible values.
       const plausible = five.windowMinutes !== 300 || !five.resetAt || five.resetAt <= now + (5 * 3600 + 60) * 1000
-      const rate = rateAt(now)
-
-      const win5 = { pctUsed: five.pctUsed, resetAt: plausible ? five.resetAt : 0 }
-      const week = weekly && weekly !== five ? { pctUsed: weekly.pctUsed, resetAt: weekly.resetAt, available: true } : { pctUsed: 0, resetAt: 0, available: false }
-      const mcp = mcpEntry
-        ? {
-            pctUsed: mcpEntry.pctUsed,
-            used: mcpEntry.used ?? mcpEntry.tools.reduce((sum, tool) => sum + tool.used, 0),
-            limit: mcpEntry.limit ?? 0,
-            resetAt: mcpEntry.resetAt,
-            tools: mcpEntry.tools,
-          }
-        : snapshot.mcp
-
-      const totals = stats7d
-        ? {
-            prompts: stats7d.prompts,
-            steps: stats7d.steps,
-            sessions: stats7d.sessions,
-            toolCalls: stats7d.tools.totals.calls,
-            tokens: stats7d.models.reduce<Tokens>((sum, model) => addTokens(sum, tokensOf(model.tokens)), EMPTY_TOKENS),
-          }
-        : snapshot.totals
-
-      const byDate = new Map((stats14d?.activity ?? []).map((entry) => [entry.date, entry.steps]))
-      const activity: Array<{ date: string; steps: number }> = []
-      for (let i = 13; i >= 0; i--) {
-        const d = new Date(now - i * DAY)
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-        activity.push({ date: key, steps: byDate.get(key) ?? 0 })
-      }
-
-      const models = (stats14d?.models ?? [])
-        .map((model) => ({
-          id: model.model.id,
-          providerID: model.model.providerID,
-          steps: model.steps,
-          tokens: tokensOf(model.tokens),
-        }))
-        .sort((a, b) => b.steps - a.steps)
 
       snapshot = {
         status: "ok",
         error: "",
-        updatedAt: Date.now(),
+        updatedAt: now,
         plan: String(quota.level ?? quota.planName ?? ""),
-        rate: rate.rate,
-        rateSwitchAt: rate.switchAt,
-        win5,
-        week,
-        mcp,
-        totals,
-        models,
-        activity,
+        win5: { pctUsed: five.pctUsed, resetAt: plausible ? five.resetAt : 0 },
+        week:
+          weekly && weekly !== five
+            ? { pctUsed: weekly.pctUsed, resetAt: weekly.resetAt, available: true }
+            : { pctUsed: 0, resetAt: 0, available: false },
+        mcp: mcpEntry
+          ? {
+              pctUsed: mcpEntry.pctUsed,
+              used: mcpEntry.used ?? mcpEntry.tools.reduce((sum, tool) => sum + tool.used, 0),
+              limit: mcpEntry.limit ?? 0,
+              resetAt: mcpEntry.resetAt,
+              tools: mcpEntry.tools,
+            }
+          : { pctUsed: 0, used: 0, limit: 0, resetAt: 0, tools: [] },
       }
     } catch (error) {
       if (run !== generation || ctx.signal.aborted) return
@@ -301,7 +199,7 @@ export const main: Plugin.MainSetup = (ctx) => {
     provider.changed()
   }
 
-  schedule()
+  timer = setInterval(() => void poll(), Math.max(30, Math.round(settings.refreshSeconds)) * 1000)
   void poll()
 
   ctx.onCleanup(() => {

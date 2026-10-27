@@ -1,6 +1,6 @@
 {
   "name": "plan-usage",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Coding plan usage panel for OpenCode Desktop — zcode-style quota cards, credits, and activity",
   "type": "module",
   "private": true,

@@ -27,68 +27,34 @@ export const DEFAULT_SETTINGS: Settings = {
   projectId: "",
 }
 
-const TokensSchema = Schema.Struct({
-  input: Schema.Number,
-  output: Schema.Number,
-  reasoning: Schema.Number,
-  cacheRead: Schema.Number,
-  cacheWrite: Schema.Number,
-})
-
-/** One quota window from the live z.ai quota API. */
-const WindowSchema = Schema.Struct({
+const Window = Schema.Struct({
   /** Percent of the allowance used, 0–100. */
   pctUsed: Schema.Number,
   /** ms epoch when the window refreshes; 0 when unknown. */
   resetAt: Schema.Number,
 })
 
-const McpSchema = Schema.Struct({
-  pctUsed: Schema.Number,
-  used: Schema.Number,
-  limit: Schema.Number,
-  resetAt: Schema.Number,
-  tools: Schema.Array(Schema.Struct({ name: Schema.String, used: Schema.Number })),
-})
-
-/** Snapshot pushed to every window after each refresh. */
+/** Snapshot of the live z.ai quota, pushed to every window after each refresh. */
 export const UsageState = Schema.Struct({
   status: Schema.Literals(["pending", "ok", "error"]),
   error: Schema.String,
   updatedAt: Schema.Number,
   /** Plan level from the API ("pro"), or "" when unknown. */
   plan: Schema.String,
-  /** Current credit rate and when it flips, ms epoch. */
-  rate: Schema.String,
-  rateSwitchAt: Schema.Number,
-  win5: WindowSchema,
+  win5: Window,
   /** The weekly window, when the plan exposes one. */
-  week: Schema.Struct({ ...WindowSchema.fields, available: Schema.Boolean }),
-  mcp: McpSchema,
-  totals: Schema.Struct({
-    prompts: Schema.Number,
-    steps: Schema.Number,
-    sessions: Schema.Number,
-    toolCalls: Schema.Number,
-    tokens: TokensSchema,
+  week: Schema.Struct({ ...Window.fields, available: Schema.Boolean }),
+  mcp: Schema.Struct({
+    pctUsed: Schema.Number,
+    used: Schema.Number,
+    limit: Schema.Number,
+    resetAt: Schema.Number,
+    tools: Schema.Array(Schema.Struct({ name: Schema.String, used: Schema.Number })),
   }),
-  models: Schema.Array(
-    Schema.Struct({
-      id: Schema.String,
-      providerID: Schema.String,
-      steps: Schema.Number,
-      tokens: TokensSchema,
-    }),
-  ),
-  activity: Schema.Array(Schema.Struct({ date: Schema.String, steps: Schema.Number })),
 })
 
 export type UsageState = Schema.Schema.Type<typeof UsageState>
 
-/**
- * The bridge between the main process (which polls the z.ai quota API and the
- * local OpenCode stats) and windows (which render it).
- */
 export const UsageBridge = Ipc.define({
   id: "plan-usage.bridge",
   state: UsageState,
