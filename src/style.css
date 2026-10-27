@@ -100,6 +100,94 @@
   white-space: nowrap;
 }
 
+/* ---------- info box (usage dialog style, v2 tokens) ---------- */
+
+.opu-box-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.opu-box-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.opu-box-label,
+.opu-box-value {
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 530;
+  letter-spacing: -0.04px;
+  font-variant-numeric: tabular-nums;
+  color: var(--v2-text-text-base, var(--opu-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opu-box-spend {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.opu-box-dot {
+  color: var(--v2-icon-icon-muted, var(--opu-muted));
+}
+
+.opu-box-sub,
+.opu-box-caption {
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 440;
+  letter-spacing: -0.04px;
+  color: var(--v2-text-text-muted, var(--opu-muted));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opu-box-caption {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.opu-box-danger {
+  color: var(--v2-state-fg-danger, var(--opu-danger)) !important;
+}
+
+.opu-box-track {
+  height: 8px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--v2-background-bg-layer-03, var(--opu-track));
+}
+
+.opu-box-fill {
+  height: 100%;
+  background: var(--v2-background-bg-inverse, var(--opu-text));
+}
+
+.opu-box-fill.opu-box-danger {
+  background: var(--v2-state-fg-danger, var(--opu-danger));
+}
+
+.opu-box-divider {
+  height: 1px;
+  flex: none;
+  align-self: stretch;
+  background: var(--v2-border-border-base, var(--opu-surface-border));
+}
+
 /* ---------- header ---------- */
 
 .opu-header {
