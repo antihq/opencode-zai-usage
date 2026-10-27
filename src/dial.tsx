@@ -1,0 +1,92 @@
+import { Show } from "solid-js"
+import { usePlugin } from "@opencode/plugin/gui"
+import type { MountedSession } from "@opencode/plugin/gui"
+import type { definition } from "./definition"
+import { UsageBridge } from "./contract"
+
+const HOUR = 3_600_000
+const DAY = 86_400_000
+
+function timeOfDay(ms: number): string {
+  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(ms))
+}
+
+function remaining(pctUsed: number): number {
+  return Math.max(0, Math.round(100 - pctUsed))
+}
+
+/**
+ * The header dial: a compact ring matching the header's icon size, with the
+ * 5-hour remaining percent beside it like the header's token counter. Hover
+ * shows the details; click opens the usage panel.
+ */
+export function UsageDial(props: { session: MountedSession }) {
+  const ctx = usePlugin<typeof definition>()
+  const bridge = ctx.main(UsageBridge)
+
+  const state = () => {
+    const snapshot = bridge.state()
+    return snapshot && snapshot.status === "ok" ? snapshot : undefined
+  }
+
+  const settings = () => ctx.stores.settings.value
+  const pctUsed = () => state()?.win5.pctUsed ?? 0
+
+  const color = () => {
+    const pct = pctUsed()
+    if (!state()) return "var(--opu-dial-idle)"
+    if (pct >= settings().dangerAt) return "var(--opu-danger)"
+    if (pct >= settings().warnAt) return "var(--opu-warn)"
+    return "var(--opu-sage)"
+  }
+
+  const tooltip = () => {
+    const snapshot = state()
+    if (!snapshot) return `${ctx.t("title")} — ${ctx.t("panel.error")}`
+    const five = `${ctx.t("row.5h")} ${remaining(snapshot.win5.pctUsed)}%`
+    const mcp = snapshot.mcp.limit > 0 ? ` · MCP ${remaining(snapshot.mcp.pctUsed)}%` : ""
+    const reset = snapshot.win5.resetAt ? ` · ${ctx.t("panel.resets", { time: timeOfDay(snapshot.win5.resetAt) })}` : ""
+    return `${ctx.t("title")}: ${five}${mcp}${reset}`
+  }
+
+  const open = () => ctx.layout.open(`${ctx.id}:usage`, props.session)
+
+  const size = 16
+  const stroke = 2
+  const radius = (size - stroke) / 2
+  const circumference = 2 * Math.PI * radius
+
+  return (
+    <span class={`opu-root opu-dial-wrap ${ctx.appearance.mode() === "dark" ? "opu-dark" : ""}`}>
+      <ctx.ui.Tooltip value={tooltip()} placement="bottom">
+        <button type="button" class="opu-dial" aria-label={tooltip()} onClick={open}>
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke="var(--opu-dial-track)"
+              stroke-width={stroke}
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke={color()}
+              stroke-width={stroke}
+              stroke-linecap="round"
+              stroke-dasharray={String(circumference)}
+              stroke-dashoffset={String(circumference * (pctUsed() / 100))}
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            />
+          </svg>
+          <Show when={state()}>
+            <span class="opu-dial-label">{remaining(pctUsed())}%</span>
+          </Show>
+        </button>
+      </ctx.ui.Tooltip>
+    </span>
+  )
+}
