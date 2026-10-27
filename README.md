@@ -1,12 +1,12 @@
 # opencode-zai-usage
 
-A coding-plan usage dial for [OpenCode Desktop](https://opencode.ai/v2/docs/build/plugins/gui). One ring in the session header; hover for a summary, click for the quota card. Live values from the z.ai plan API — no estimates.
+A z.ai coding-plan usage dial for [OpenCode Desktop](https://opencode.ai/v2/docs/build/plugins/gui). One ring in the session header shows how much of your 5-hour window is spent; clicking it opens the quota details. Live values from the z.ai plan API — no estimates.
 
 ## What you get
 
 - **Header dial** — 16px ring in a native 28px icon-button box. The dark arc grows as the 5-hour window is spent; amber at the warning threshold, red at critical.
-- **Tooltip** — the app's own tooltip component: `5 hours 95% · resets 13:27` rows plus the ⇧⌘U keycaps.
-- **Info box** (click or ⇧⌘U) — the app's dialog frame with one row per window: 5 hours, weekly (when the plan exposes it), MCP tools (with call counts), each with percent remaining, reset countdown, and a track bar.
+- **Tooltip** — a plain action label: `Show usage details`.
+- **Info box** (click) — the app's dialog frame with one row per window: 5 hours, weekly (when the plan exposes one), MCP tools (with call counts) — each with percent remaining, reset time and countdown, and a track bar. Head badges show the plan level and whether you're in the peak or off-peak rate.
 - **Settings** — API region (global / BigModel CN), optional key override, team IDs, refresh interval, thresholds.
 
 ## How it works
