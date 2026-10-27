@@ -1,4 +1,3 @@
-import { Show } from "solid-js"
 import { usePlugin } from "@opencode/plugin/gui"
 import type { MountedSession } from "@opencode/plugin/gui"
 import type { definition } from "./definition"
@@ -82,9 +81,6 @@ export function UsageDial(props: { session: MountedSession }) {
               transform={`rotate(-90 ${size / 2} ${size / 2})`}
             />
           </svg>
-          <Show when={state()}>
-            <span class="opu-dial-label">{remaining(pctUsed())}%</span>
-          </Show>
         </button>
       </ctx.ui.Tooltip>
     </span>
