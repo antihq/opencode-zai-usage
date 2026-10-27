@@ -36,7 +36,7 @@
   --opu-accent: #f4f4f5;
 }
 
-/* ---------- header dial ---------- */
+/* ---------- header dial (IconButton size-large geometry: 28px box, 6px breath) ---------- */
 
 .opu-dial-wrap {
   display: inline-flex;
@@ -46,23 +46,31 @@
 .opu-dial {
   display: inline-flex;
   align-items: center;
-  padding: 5px;
-  margin: -5px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: none;
-  border-radius: 8px;
-  background: transparent;
-  cursor: pointer;
-  color: inherit;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--v2-text-text-base, var(--opu-text));
+  user-select: none;
+  outline: none;
+  cursor: default;
   font: inherit;
 }
 
 .opu-dial:hover {
-  background: var(--opu-dial-hover);
+  background-color: var(--v2-overlay-simple-overlay-hover, rgba(0, 0, 0, 0.05));
+}
+
+.opu-dial:active {
+  background-color: var(--v2-overlay-simple-overlay-pressed, rgba(0, 0, 0, 0.08));
 }
 
 .opu-dial:focus-visible {
-  outline: 2px solid var(--opu-blue);
-  outline-offset: 1px;
+  outline: 2px solid var(--v2-border-border-focus, var(--opu-blue));
+  outline-offset: 2.5px;
 }
 
 .opu-dial svg {
