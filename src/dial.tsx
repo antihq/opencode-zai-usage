@@ -148,26 +148,8 @@ export function UsageDial() {
     return "var(--v2-text-text-base, var(--opu-text))"
   }
 
-  /** Tooltip rows: one per window, breath-spaced, no separators. */
-  const tipRows = () => {
-    const snapshot = state()
-    if (!snapshot) return []
-    const list = [{ id: "win5", label: ctx.t("row.5h"), pct: snapshot.win5.pctUsed, part: resetText(snapshot.win5.resetAt) }]
-    if (snapshot.week.available) {
-      list.push({ id: "week", label: ctx.t("row.weekly"), pct: snapshot.week.pctUsed, part: resetText(snapshot.week.resetAt) })
-    }
-    if (snapshot.mcp.limit > 0 || snapshot.mcp.tools.length > 0) {
-      list.push({ id: "mcp", label: ctx.t("row.mcp"), pct: snapshot.mcp.pctUsed, part: resetText(snapshot.mcp.resetAt) })
-    }
-    return list
-  }
-
-  const ariaLabel = () => {
-    const snapshot = state()
-    return snapshot
-      ? `${ctx.t("title")} 5 hours ${remaining(snapshot.win5.pctUsed)}% ${resetText(snapshot.win5.resetAt)}`
-      : ctx.t("title")
-  }
+  /** Native-style action tooltip: a label plus the keybind chips. */
+  const tooltipLabel = () => (state() ? ctx.t("tooltip.show") : ctx.t("panel.error"))
 
   const open = () => {
     ctx.dialogs.open((dialog) => <UsageInfoBox close={dialog.close} />, { replace: true })
@@ -180,28 +162,8 @@ export function UsageDial() {
 
   return (
     <span class={`opu-root opu-dial-wrap ${ctx.appearance.mode() === "dark" ? "opu-dark" : ""}`}>
-      <ctx.ui.Tooltip
-        value={
-          <div class="opu-tip">
-            <For each={tipRows()}>
-              {(row) => (
-                <div class="opu-tip-row">
-                  <span class="opu-tip-label">{row.label}</span>
-                  <span class="opu-tip-value">
-                    {remaining(row.pct)}%
-                    <Show when={row.part}>
-                      <span class="opu-tip-sub">{row.part}</span>
-                    </Show>
-                  </span>
-                </div>
-              )}
-            </For>
-          </div>
-        }
-        keys={ctx.keybinds.keybind(`${ctx.id}.open`)}
-        placement="bottom"
-      >
-        <button type="button" class="opu-dial" aria-label={ariaLabel()} onClick={open}>
+      <ctx.ui.Tooltip value={tooltipLabel()} keys={ctx.keybinds.keybind(`${ctx.id}.open`)} placement="bottom">
+        <button type="button" class="opu-dial" aria-label={tooltipLabel()} onClick={open}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
             <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--opu-dial-track)" stroke-width={stroke} />
             <circle
