@@ -78,7 +78,7 @@ export function UsageDial(props: { session: MountedSession }) {
               stroke-width={stroke}
               stroke-linecap="round"
               stroke-dasharray={String(circumference)}
-              stroke-dashoffset={String(circumference * (pctUsed() / 100))}
+              stroke-dashoffset={String(circumference * (1 - pctUsed() / 100))}
               transform={`rotate(-90 ${size / 2} ${size / 2})`}
             />
           </svg>
