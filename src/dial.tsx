@@ -37,7 +37,7 @@ export function UsageDial(props: { session: MountedSession }) {
     if (!state()) return "var(--opu-dial-idle)"
     if (pct >= settings().dangerAt) return "var(--opu-danger)"
     if (pct >= settings().warnAt) return "var(--opu-warn)"
-    return "var(--opu-sage)"
+    return "var(--opu-text)"
   }
 
   const tooltip = () => {

@@ -4,10 +4,10 @@
   --opu-blue: #3b82f6;
   --opu-purple: #a855f7;
   --opu-orange: #f59e0b;
-  --opu-sage: #6faf7e;
   --opu-warn: #f0a63a;
   --opu-danger: #e5484d;
-  --opu-dial-track: #e4e4e7;
+  --opu-dial-track: #dcdce0;
+  --opu-dial-hover: #f0f0f0;
   --opu-dial-idle: #b6b6bc;
   --opu-text: #1a1a1a;
   --opu-muted: #8a8a8a;
@@ -31,6 +31,7 @@
   --opu-surface-border: #2d2d33;
   --opu-track: #2a2a30;
   --opu-dial-track: #2e2e34;
+  --opu-dial-hover: #2a2a30;
   --opu-dial-idle: #5a5a62;
   --opu-accent: #f4f4f5;
 }
@@ -45,11 +46,11 @@
 .opu-dial {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 6px;
-  margin: -4px -6px;
+  gap: 6px;
+  padding: 5px 9px;
+  margin: -5px -9px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   color: inherit;
@@ -57,7 +58,7 @@
 }
 
 .opu-dial:hover {
-  background: var(--opu-track);
+  background: var(--opu-dial-hover);
 }
 
 .opu-dial:focus-visible {
@@ -71,7 +72,8 @@
 }
 
 .opu-dial-label {
-  font-size: 12px;
+  font-size: inherit;
+  font-weight: 400;
   color: var(--opu-muted);
   font-variant-numeric: tabular-nums;
   line-height: 1;
