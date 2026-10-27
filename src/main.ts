@@ -189,6 +189,7 @@ export const main: Plugin.MainSetup = (ctx) => {
       }
     } catch (error) {
       if (run !== generation || ctx.signal.aborted) return
+      ctx.log.write("error", "plan-usage poll failed", { message: error instanceof Error ? error.message : String(error) })
       snapshot = {
         ...snapshot,
         status: "error",
