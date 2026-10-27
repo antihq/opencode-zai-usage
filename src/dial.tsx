@@ -1,3 +1,4 @@
+import { For } from "solid-js"
 import { usePlugin } from "@opencode/plugin/gui"
 import type { MountedSession } from "@opencode/plugin/gui"
 import type { definition } from "./definition"
@@ -10,8 +11,17 @@ function timeOfDay(ms: number): string {
   return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(ms))
 }
 
+function shortDate(ms: number): string {
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(ms))
+}
+
 function remaining(pctUsed: number): number {
   return Math.max(0, Math.round(100 - pctUsed))
+}
+
+function resetText(resetAt: number): string {
+  if (!resetAt) return ""
+  return resetAt > Date.now() + DAY ? shortDate(resetAt) : timeOfDay(resetAt)
 }
 
 /**
@@ -48,6 +58,45 @@ export function UsageDial(props: { session: MountedSession }) {
     return `${ctx.t("title")}: ${five}${mcp}${reset}`
   }
 
+  /** Rich tooltip card, matching the app's session-details tooltip. */
+  const tipCard = () => {
+    const snapshot = state()
+    if (!snapshot) return <span>{tooltip()}</span>
+    const rows: Array<{ label: string; value: string }> = [
+      {
+        label: ctx.t("row.5h"),
+        value: `${remaining(snapshot.win5.pctUsed)}%${resetText(snapshot.win5.resetAt) ? ` · ${resetText(snapshot.win5.resetAt)}` : ""}`,
+      },
+    ]
+    if (snapshot.week.available) {
+      rows.push({
+        label: ctx.t("row.weekly"),
+        value: `${remaining(snapshot.week.pctUsed)}%${resetText(snapshot.week.resetAt) ? ` · ${resetText(snapshot.week.resetAt)}` : ""}`,
+      })
+    }
+    if (snapshot.mcp.limit > 0 || snapshot.mcp.tools.length > 0) {
+      rows.push({
+        label: ctx.t("row.mcp"),
+        value:
+          snapshot.mcp.limit > 0
+            ? `${remaining(snapshot.mcp.pctUsed)}% · ${snapshot.mcp.used.toLocaleString()}/${snapshot.mcp.limit.toLocaleString()}`
+            : `${remaining(snapshot.mcp.pctUsed)}%`,
+      })
+    }
+    return (
+      <div class="opu-tip">
+        <For each={rows}>
+          {(row) => (
+            <div class="opu-tip-row">
+              <span class="opu-tip-label">{row.label}</span>
+              <span class="opu-tip-value">{row.value}</span>
+            </div>
+          )}
+        </For>
+      </div>
+    )
+  }
+
   const open = () => ctx.layout.open(`${ctx.id}:usage`, props.session)
 
   const size = 16
@@ -57,7 +106,7 @@ export function UsageDial(props: { session: MountedSession }) {
 
   return (
     <span class={`opu-root opu-dial-wrap ${ctx.appearance.mode() === "dark" ? "opu-dark" : ""}`}>
-      <ctx.ui.Tooltip value={tooltip()} placement="bottom">
+      <ctx.ui.Tooltip value={tipCard()} keys={ctx.keybinds.keybind(`${ctx.id}.open`)} placement="bottom">
         <button type="button" class="opu-dial" aria-label={tooltip()} onClick={open}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
             <circle

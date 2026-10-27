@@ -70,6 +70,36 @@
   flex: none;
 }
 
+/* ---------- dial tooltip ---------- */
+
+.opu-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 170px;
+}
+
+.opu-tip-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.opu-tip-label {
+  font-size: 12px;
+  color: var(--opu-muted);
+  white-space: nowrap;
+}
+
+.opu-tip-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--opu-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* ---------- header ---------- */
 
 .opu-header {
