@@ -9,7 +9,6 @@ export const definition = Plugin.define({
     en: {
       "title": "Coding plan usage",
       "tooltip.show": "Show usage details",
-      "command.open": "Show coding plan usage",
       "panel.resets": "resets {{time}}",
       "panel.rolling": "rolls continuously",
       "panel.live": "Live",

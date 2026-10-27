@@ -1,9 +1,9 @@
 import { createEffect } from "solid-js"
-import { Command, SettingsPage, Slot, Style, type Command as CommandType } from "@opencode/plugin/gui"
+import { SettingsPage, Slot, Style } from "@opencode/plugin/gui"
 import type { Plugin } from "@opencode/plugin/gui"
 import type { definition } from "./definition"
 import { UsageBridge } from "./contract"
-import { UsageDial, UsageInfoBox } from "./dial"
+import { UsageDial } from "./dial"
 import { UsageSettings } from "./settings"
 import css from "./style.css?inline"
 
@@ -17,10 +17,6 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
     void bridge.applySettings({ ...value }, { signal: ctx.signal }).catch(() => {})
   })
 
-  const openUsage = () => {
-    ctx.dialogs.open((dialog) => <UsageInfoBox close={dialog.close} />, { replace: true })
-  }
-
   ctx.add(Style, css)
 
   ctx.add(Slot, {
@@ -28,15 +24,6 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
     order: 10,
     render: () => <UsageDial />,
   })
-
-  ctx.add(Command, (): CommandType => ({
-    id: "open",
-    title: ctx.t("command.open"),
-    keywords: "usage plan quota glm zai",
-    section: "navigation",
-    bind: "mod+shift+u",
-    run: openUsage,
-  }))
 
   ctx.add(SettingsPage, {
     id: "usage",

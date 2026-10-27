@@ -1,6 +1,6 @@
 {
   "name": "opencode-zai-usage",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Coding plan usage panel for OpenCode Desktop — zcode-style quota cards, credits, and activity",
   "type": "module",
   "private": true,

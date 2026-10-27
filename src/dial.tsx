@@ -162,7 +162,7 @@ export function UsageDial() {
 
   return (
     <span class={`opu-root opu-dial-wrap ${ctx.appearance.mode() === "dark" ? "opu-dark" : ""}`}>
-      <ctx.ui.Tooltip value={tooltipLabel()} keys={ctx.keybinds.keybind(`${ctx.id}.open`)} placement="bottom">
+      <ctx.ui.Tooltip value={tooltipLabel()} placement="bottom">
         <button type="button" class="opu-dial" aria-label={tooltipLabel()} onClick={open}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
             <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--opu-dial-track)" stroke-width={stroke} />
