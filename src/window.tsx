@@ -1,21 +1,19 @@
 import { createEffect } from "solid-js"
 import {
   Command,
-  ComposerPill,
   MenuItem,
   Panel,
   SettingsPage,
+  Slot,
   Style,
-  TitlebarItem,
   type Command as CommandType,
-  type ComposerPillRow,
   type MenuItem as MenuItemType,
   type PanelTab,
-  type TitlebarItem as TitlebarItemType,
 } from "@opencode/plugin/gui"
 import type { Plugin } from "@opencode/plugin/gui"
 import type { definition } from "./definition"
 import { UsageBridge } from "./contract"
+import { UsageDial } from "./dial"
 import { UsagePanel } from "./panel"
 import { UsageSettings } from "./settings"
 import css from "./style.css?inline"
@@ -23,12 +21,10 @@ import css from "./style.css?inline"
 export const setup: Plugin.Setup<typeof definition> = (ctx) => {
   const bridge = ctx.main(UsageBridge)
 
-  const settings = () => ctx.stores.settings.value
-
   // Keep the main process's poller in sync with the stored settings.
   createEffect(() => {
     if (ctx.app.platform !== "desktop") return
-    const value = settings()
+    const value = ctx.stores.settings.value
     void bridge.applySettings({ ...value }, { signal: ctx.signal }).catch(() => {})
   })
 
@@ -38,24 +34,17 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
     else ctx.layout.settings("usage")
   }
 
-  const quota = () => {
-    const state = bridge.state()
-    if (!state || state.status !== "ok") return undefined
-    return state
-  }
-
-  const remaining = (pctUsed: number) => Math.max(0, Math.round(100 - pctUsed))
-
-  const tone = (pct: number): "success" | "warning" | "danger" | undefined => {
-    if (pct >= settings().dangerAt) return "danger"
-    if (pct >= settings().warnAt) return "warning"
-    return undefined
-  }
-
   /* ---------- styles ---------- */
   ctx.add(Style, css)
 
-  /* ---------- side panel ---------- */
+  /* ---------- header dial ---------- */
+  ctx.add(Slot, {
+    at: "session.header",
+    order: 10,
+    render: (input) => <UsageDial session={input.session} />,
+  })
+
+  /* ---------- side panel (full data) ---------- */
   const usageTab: PanelTab = {
     id: "usage",
     get title() {
@@ -78,68 +67,6 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
     },
     list: (input) => (input.open.includes("usage") ? [usageTab] : []),
     render: () => <UsagePanel />,
-  })
-
-  /* ---------- composer pill ---------- */
-  ctx.add(ComposerPill, {
-    id: "usage",
-    show: (input) => {
-      const state = quota()
-      if (!state) return undefined
-      const pct5 = state.win5.pctUsed
-      const pctMcp = state.mcp.limit > 0 ? state.mcp.pctUsed : undefined
-      const label = `5h ${remaining(pct5)}%${pctMcp !== undefined ? ` · MCP ${remaining(pctMcp)}%` : ""}`
-      const rows: ComposerPillRow[] = [
-        {
-          id: "win5",
-          label: `${ctx.t("pill.row5h")} — ${remaining(pct5)}%`,
-          icon: "status",
-          tone: tone(pct5),
-        },
-      ]
-      if (pctMcp !== undefined) {
-        rows.push({
-          id: "mcp",
-          label: `${ctx.t("pill.rowMcp")} — ${remaining(pctMcp)}%`,
-          icon: "mcp",
-          tone: tone(pctMcp),
-        })
-      }
-      rows.push(
-        {
-          id: "open",
-          label: ctx.t("pill.open"),
-          icon: "window-analytics",
-          run: () => ctx.layout.open(`${ctx.id}:usage`, input.session),
-        },
-        {
-          id: "settings",
-          label: ctx.t("pill.settings"),
-          icon: "settings-gear",
-          run: () => ctx.layout.settings("usage"),
-        },
-      )
-      return {
-        icon: "status",
-        label,
-        title: ctx.t("pill.title"),
-        tone: tone(pct5) ?? (pctMcp !== undefined ? tone(pctMcp) : undefined),
-        rows,
-      }
-    },
-  })
-
-  /* ---------- titlebar indicator ---------- */
-  ctx.add(TitlebarItem, (): TitlebarItemType | undefined => {
-    const state = quota()
-    if (!state) return undefined
-    return {
-      id: "usage",
-      label: `${remaining(state.win5.pctUsed)}%`,
-      icon: "status",
-      title: ctx.t("pill.title"),
-      run: openUsage,
-    }
   })
 
   /* ---------- + menu launcher ---------- */

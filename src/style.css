@@ -4,6 +4,10 @@
   --opu-blue: #3b82f6;
   --opu-purple: #a855f7;
   --opu-orange: #f59e0b;
+  --opu-sage: #9ccfa7;
+  --opu-warn: #f0a63a;
+  --opu-danger: #e5484d;
+  --opu-dial-track: #e3ede4;
   --opu-text: #1a1a1a;
   --opu-muted: #8a8a8a;
   --opu-surface: #f6f6f7;
@@ -25,7 +29,133 @@
   --opu-surface: #1d1d21;
   --opu-surface-border: #2d2d33;
   --opu-track: #2a2a30;
+  --opu-dial-track: #262b27;
   --opu-accent: #f4f4f5;
+}
+
+/* ---------- header dial ---------- */
+
+.opu-dial-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.opu-dial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+.opu-dial:hover {
+  background: var(--opu-track);
+}
+
+.opu-dial-svg {
+  display: block;
+}
+
+.opu-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: min(420px, 86vw);
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--opu-surface-border);
+  background: var(--opu-pop-bg, #ffffff);
+  box-shadow:
+    0 4px 6px -2px rgb(0 0 0 / 0.05),
+    0 16px 32px -8px rgb(0 0 0 / 0.18);
+}
+
+.opu-dark .opu-pop {
+  --opu-pop-bg: #202024;
+}
+
+.opu-pop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.opu-pop-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.opu-pop-more {
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  color: var(--opu-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.opu-pop-more:hover {
+  color: var(--opu-text);
+}
+
+.opu-pop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 12px;
+}
+
+.opu-pop-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.opu-pop-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--opu-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opu-pop-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--opu-text);
+  white-space: nowrap;
+}
+
+.opu-pop-detail {
+  font-size: 10.5px;
+  color: var(--opu-muted);
+}
+
+.opu-pop-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.opu-pop-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px 8px;
+  color: var(--opu-muted);
+  font-size: 12px;
+  text-align: center;
 }
 
 /* ---------- header ---------- */
