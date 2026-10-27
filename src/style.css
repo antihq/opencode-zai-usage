@@ -1,0 +1,406 @@
+/* plan-usage — zcode-inspired usage panel */
+
+.opu-root {
+  --opu-blue: #3b82f6;
+  --opu-purple: #a855f7;
+  --opu-orange: #f59e0b;
+  --opu-text: #1a1a1a;
+  --opu-muted: #8a8a8a;
+  --opu-surface: #f6f6f7;
+  --opu-surface-border: #e4e4e7;
+  --opu-track: #e9e9ec;
+  --opu-accent: #18181b;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: var(--opu-text);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.opu-root.opu-dark {
+  --opu-text: #f4f4f5;
+  --opu-muted: #8b8b90;
+  --opu-surface: #1d1d21;
+  --opu-surface-border: #2d2d33;
+  --opu-track: #2a2a30;
+  --opu-accent: #f4f4f5;
+}
+
+/* ---------- header ---------- */
+
+.opu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--opu-surface-border);
+}
+
+.opu-header-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.opu-sub {
+  color: var(--opu-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opu-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- quota cards ---------- */
+
+.opu-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .opu-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.opu-card {
+  background: var(--opu-surface);
+  border: 1px solid var(--opu-surface-border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.opu-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.opu-card-label {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.opu-chip {
+  color: var(--opu-muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.opu-card-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.opu-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--opu-track);
+  overflow: hidden;
+}
+
+.opu-bar-thin {
+  height: 4px;
+}
+
+.opu-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.opu-bar-fill.opu-blue {
+  background: var(--opu-blue);
+}
+
+.opu-bar-fill.opu-purple {
+  background: var(--opu-purple);
+}
+
+.opu-bar-fill.opu-orange {
+  background: var(--opu-orange);
+}
+
+/* ---------- badges ---------- */
+
+.opu-plan-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #1e7f3c;
+  background: #e6f4ea;
+}
+
+.opu-dark .opu-plan-badge {
+  color: #6ee7a0;
+  background: rgba(30, 127, 60, 0.22);
+}
+
+.opu-source-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--opu-muted);
+  background: var(--opu-track);
+}
+
+.opu-source-badge.opu-source-live {
+  color: #1e7f3c;
+  background: #e6f4ea;
+}
+
+.opu-dark .opu-source-badge.opu-source-live {
+  color: #6ee7a0;
+  background: rgba(30, 127, 60, 0.22);
+}
+
+/* ---------- mcp tool chips ---------- */
+
+.opu-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.opu-tool-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  color: var(--opu-muted);
+  background: var(--opu-track);
+}
+
+.opu-tool-chip b {
+  color: var(--opu-text);
+  font-weight: 600;
+}
+
+.opu-section-heading {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--opu-muted);
+}
+
+.opu-card-detail {
+  color: var(--opu-muted);
+  font-size: 11px;
+}
+
+/* ---------- stats ---------- */
+
+.opu-section h3 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--opu-muted);
+}
+
+.opu-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.opu-stat {
+  background: var(--opu-surface);
+  border: 1px solid var(--opu-surface-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.opu-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.opu-stat-label {
+  color: var(--opu-muted);
+  font-size: 10.5px;
+}
+
+.opu-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+  color: var(--opu-muted);
+  font-size: 11.5px;
+}
+
+.opu-tokens b {
+  color: var(--opu-text);
+  font-weight: 600;
+}
+
+/* ---------- models ---------- */
+
+.opu-model {
+  margin-bottom: 8px;
+}
+
+.opu-model-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.opu-model-name {
+  font-weight: 600;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opu-model-meta {
+  color: var(--opu-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* ---------- activity ---------- */
+
+.opu-activity {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 56px;
+  padding: 4px;
+  background: var(--opu-surface);
+  border: 1px solid var(--opu-surface-border);
+  border-radius: 10px;
+}
+
+.opu-activity-bar {
+  flex: 1;
+  min-width: 0;
+  border-radius: 2px;
+  background: var(--opu-blue);
+  opacity: 0.85;
+}
+
+/* ---------- footer / fallback ---------- */
+
+.opu-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--opu-muted);
+  font-size: 11px;
+  border-top: 1px solid var(--opu-surface-border);
+  padding-top: 10px;
+}
+
+.opu-footer-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.opu-footer a {
+  color: var(--opu-blue);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.opu-fallback {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--opu-muted);
+  padding: 24px;
+  text-align: center;
+}
+
+.opu-error-title {
+  font-weight: 600;
+  color: var(--opu-text);
+}
+
+.opu-error-detail {
+  font-size: 11px;
+}
+
+/* ---------- settings ---------- */
+
+.opu-settings {
+  height: auto;
+  min-height: 100%;
+}
+
+.opu-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--opu-surface-border);
+}
+
+.opu-settings-section:last-child {
+  border-bottom: none;
+}
+
+.opu-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opu-setting-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.opu-setting-description {
+  color: var(--opu-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.opu-setting-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.opu-settings-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

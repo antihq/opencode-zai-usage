@@ -1,0 +1,26 @@
+{
+  "name": "plan-usage",
+  "version": "0.3.0",
+  "description": "Coding plan usage panel for OpenCode Desktop — zcode-style quota cards, credits, and activity",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./gui-experimental": "./dist/gui-experimental.cjs"
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode/plugin": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "effect": "^4.0.1",
+    "solid-js": "^1.9.17",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "vite-plugin-solid": "^2.11.14"
+  }
+}
