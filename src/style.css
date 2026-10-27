@@ -82,7 +82,14 @@
 
 .opu-tip-value {
   color: var(--v2-text-text-base, var(--opu-text));
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
   white-space: nowrap;
+}
+
+.opu-tip-sub {
+  color: var(--v2-text-text-muted, var(--opu-muted));
 }
 
 /* ---------- info box (usage-dialog layout, v2 tokens) ---------- */

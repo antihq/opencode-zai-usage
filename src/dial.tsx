@@ -18,21 +18,20 @@ function remaining(pctUsed: number): number {
   return Math.max(0, Math.round(100 - pctUsed))
 }
 
-function planLabel(plan: string): string {
-  return plan ? `${plan.charAt(0).toUpperCase()}${plan.slice(1)}` : ""
-}
-
 function resetText(resetAt: number): string {
   if (!resetAt) return ""
   return resetAt > Date.now() + DAY ? shortDate(resetAt) : timeOfDay(resetAt)
 }
 
-/** Countdown like the app's usage dialog: "2h 40m", "3d 4h", "5m". */
 function until(ms: number): string {
   const minutes = Math.max(1, Math.floor((ms - Date.now()) / 60_000))
   if (minutes >= 1_440) return `${Math.floor(minutes / 1_440)}d ${Math.floor((minutes % 1_440) / 60)}h`
   if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
   return `${minutes}m`
+}
+
+function planLabel(plan: string): string {
+  return plan ? `${plan.charAt(0).toUpperCase()}${plan.slice(1)}` : ""
 }
 
 /** The info box the dial opens — one row per quota window, app-dialog style. */
@@ -44,25 +43,37 @@ export function UsageInfoBox(props: { close: () => void }) {
   }
   const danger = (pct: number) => pct >= ctx.stores.settings.value.dangerAt
 
+  /** Each row: a label, the remaining percent, and breath-spaced detail parts. */
   const rows = () => {
     const snapshot = state()
     if (!snapshot) return []
-    const reset = (at: number) => (at ? ctx.t("box.resets", { time: `${resetText(at)} · ${until(at)}` }) : ctx.t("panel.rolling"))
-    const list: Array<{ id: string; label: string; pctUsed: number; sub: string }> = [
-      { id: "win5", label: ctx.t("row.5h"), pctUsed: snapshot.win5.pctUsed, sub: reset(snapshot.win5.resetAt) },
+    const list: Array<{ id: string; label: string; pctUsed: number; parts: string[] }> = [
+      {
+        id: "win5",
+        label: ctx.t("row.5h"),
+        pctUsed: snapshot.win5.pctUsed,
+        parts: snapshot.win5.resetAt ? [resetText(snapshot.win5.resetAt), until(snapshot.win5.resetAt)] : [ctx.t("panel.rolling")],
+      },
     ]
     if (snapshot.week.available) {
-      list.push({ id: "week", label: ctx.t("row.weekly"), pctUsed: snapshot.week.pctUsed, sub: reset(snapshot.week.resetAt) })
+      list.push({
+        id: "week",
+        label: ctx.t("row.weekly"),
+        pctUsed: snapshot.week.pctUsed,
+        parts: snapshot.week.resetAt ? [resetText(snapshot.week.resetAt), until(snapshot.week.resetAt)] : [ctx.t("panel.rolling")],
+      })
     }
     if (snapshot.mcp.limit > 0 || snapshot.mcp.tools.length > 0) {
       list.push({
         id: "mcp",
         label: ctx.t("row.mcp"),
         pctUsed: snapshot.mcp.pctUsed,
-        sub:
-          snapshot.mcp.limit > 0
-            ? ctx.t("box.calls", { used: snapshot.mcp.used.toLocaleString(), limit: snapshot.mcp.limit.toLocaleString() })
-            : reset(snapshot.mcp.resetAt),
+        parts: [
+          ...(snapshot.mcp.limit > 0
+            ? [ctx.t("box.calls", { used: snapshot.mcp.used.toLocaleString(), limit: snapshot.mcp.limit.toLocaleString() })]
+            : []),
+          ...(snapshot.mcp.resetAt ? [resetText(snapshot.mcp.resetAt)] : []),
+        ],
       })
     }
     return list
@@ -71,17 +82,7 @@ export function UsageInfoBox(props: { close: () => void }) {
   return (
     <ctx.ui.Dialog
       title={ctx.t("title")}
-      description={
-        state()
-          ? [
-              state()!.plan ? ctx.t("box.plan", { plan: planLabel(state()!.plan) }) : "",
-              state()!.rate === "peak" ? ctx.t("rate.peak") : ctx.t("rate.offpeak"),
-              ctx.t("panel.updated", { time: timeOfDay(state()!.updatedAt) }),
-            ]
-              .filter(Boolean)
-              .join(", ")
-          : ctx.t("panel.error")
-      }
+      description={state() ? ctx.t("panel.updated", { time: timeOfDay(state()!.updatedAt) }) : ctx.t("panel.error")}
       closable={false}
     >
       <div class="opu-box">
@@ -89,6 +90,9 @@ export function UsageInfoBox(props: { close: () => void }) {
           <span class="opu-box-head-label">{ctx.t("box.section")}</span>
           <Show when={state()?.plan}>
             <span class="opu-box-badge">{planLabel(state()!.plan)}</span>
+          </Show>
+          <Show when={state()}>
+            <span class="opu-box-badge">{state()!.rate === "peak" ? ctx.t("rate.peak") : ctx.t("rate.offpeak")}</span>
           </Show>
         </div>
         <div class="opu-box-panel">
@@ -105,9 +109,9 @@ export function UsageInfoBox(props: { close: () => void }) {
                       <span class={`opu-box-value ${danger(row.pctUsed) ? "opu-box-danger" : ""}`}>
                         {ctx.t("box.remaining", { pct: remaining(row.pctUsed) })}
                       </span>
-                      <Show when={row.sub}>
-                        <span class="opu-box-sub">{row.sub}</span>
-                      </Show>
+                      <For each={row.parts.filter(Boolean)}>
+                        {(part) => <span class="opu-box-sub">{part}</span>}
+                      </For>
                     </span>
                   </div>
                   <div class="opu-box-track">
@@ -144,12 +148,25 @@ export function UsageDial() {
     return "var(--v2-text-text-base, var(--opu-text))"
   }
 
-  const tooltip = () => {
+  /** Tooltip rows: one per window, breath-spaced, no separators. */
+  const tipRows = () => {
     const snapshot = state()
-    if (!snapshot) return `${ctx.t("title")} — ${ctx.t("panel.error")}`
-    const mcp = snapshot.mcp.limit > 0 ? ` · MCP ${remaining(snapshot.mcp.pctUsed)}%` : ""
-    const reset = snapshot.win5.resetAt ? ` · ${ctx.t("panel.resets", { time: timeOfDay(snapshot.win5.resetAt) })}` : ""
-    return `${ctx.t("title")}: 5h ${remaining(snapshot.win5.pctUsed)}%${mcp}${reset}`
+    if (!snapshot) return []
+    const list = [{ id: "win5", label: ctx.t("row.5h"), pct: snapshot.win5.pctUsed, part: resetText(snapshot.win5.resetAt) }]
+    if (snapshot.week.available) {
+      list.push({ id: "week", label: ctx.t("row.weekly"), pct: snapshot.week.pctUsed, part: resetText(snapshot.week.resetAt) })
+    }
+    if (snapshot.mcp.limit > 0 || snapshot.mcp.tools.length > 0) {
+      list.push({ id: "mcp", label: ctx.t("row.mcp"), pct: snapshot.mcp.pctUsed, part: resetText(snapshot.mcp.resetAt) })
+    }
+    return list
+  }
+
+  const ariaLabel = () => {
+    const snapshot = state()
+    return snapshot
+      ? `${ctx.t("title")} 5 hours ${remaining(snapshot.win5.pctUsed)}% ${resetText(snapshot.win5.resetAt)}`
+      : ctx.t("title")
   }
 
   const open = () => {
@@ -163,8 +180,28 @@ export function UsageDial() {
 
   return (
     <span class={`opu-root opu-dial-wrap ${ctx.appearance.mode() === "dark" ? "opu-dark" : ""}`}>
-      <ctx.ui.Tooltip value={tooltip()} keys={ctx.keybinds.keybind(`${ctx.id}.open`)} placement="bottom">
-        <button type="button" class="opu-dial" aria-label={tooltip()} onClick={open}>
+      <ctx.ui.Tooltip
+        value={
+          <div class="opu-tip">
+            <For each={tipRows()}>
+              {(row) => (
+                <div class="opu-tip-row">
+                  <span class="opu-tip-label">{row.label}</span>
+                  <span class="opu-tip-value">
+                    {remaining(row.pct)}%
+                    <Show when={row.part}>
+                      <span class="opu-tip-sub">{row.part}</span>
+                    </Show>
+                  </span>
+                </div>
+              )}
+            </For>
+          </div>
+        }
+        keys={ctx.keybinds.keybind(`${ctx.id}.open`)}
+        placement="bottom"
+      >
+        <button type="button" class="opu-dial" aria-label={ariaLabel()} onClick={open}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
             <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--opu-dial-track)" stroke-width={stroke} />
             <circle
